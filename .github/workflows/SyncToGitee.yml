@@ -1,18 +1,28 @@
-name: Sync To Gitee
+# .github/workflows/sync.yml
+name: Sync Fork
 
-on: [ push, delete, create ]
+on:
+  # 推送代码后触发
+  push:
+  # 定时任务触发，使用 cron 规则，这里默认一小时执行一次
+  schedule:
+    - cron: '* */3 * * *'
 
 jobs:
-  build:
+  merge:
     runs-on: ubuntu-latest
     steps:
-      - name: Sync to Gitee
-        uses: wearerequired/git-mirror-action@master
-        env:
-          # 注意在 Settings->Secrets 配置 GITEE_RSA_PRIVATE_KEY
-          SSH_PRIVATE_KEY: ${{ secrets.GITEE_RSA_PRIVATE_KEY }}
-        with:
-          # 注意替换为你的 GitHub 源仓库地址
-          source-repo: git@github.com:RayenAlex/openwrt.git
-          # 注意替换为你的 Gitee 目标仓库地址
-          destination-repo: git@gitee.com:elory_git/openwrt.git
+      - uses: actions/checkout@v2
+      - name: Merge upstream
+        run: |
+          # 使用自己的用户名替换 username
+          git config --global user.name 'rayen'
+          git config --global user.email 'rayenofjri@gmail.com'
+
+          git pull --unshallow
+          git remote add upstream https://github.com/openwrt/openwrt.git
+          git fetch upstream
+
+          # 可以自定义要同步的分支
+          git checkout -b v22.03.0-rc4 origin/v22.03.0-rc4
+          git merge --no-edit upstream/v22.03.0-rc4
